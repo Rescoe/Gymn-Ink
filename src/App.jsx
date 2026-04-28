@@ -34,8 +34,6 @@ const DEMO_FILES = [
   { label: 'Video2 Trajectoire 3&4', path: '/Video2 Trajectoire 3&4.json' },
 ]
 
-
-
 export default function App() {
   const canvasRef = useRef(null)
   const [rawData, setRawData] = useState(null)
@@ -57,22 +55,20 @@ export default function App() {
   }, [stop])
 
   const handleLoadPreset = useCallback(async (path) => {
-  try {
-    const response = await fetch(path)
-    if (!response.ok) throw new Error(`Failed to load ${path}`)
-    const raw = await response.json()
+    try {
+      const response = await fetch(path)
+      if (!response.ok) throw new Error(`Failed to load ${path}`)
+      const raw = await response.json()
+      handleLoad(raw)
+    } catch (err) {
+      console.error('Unable to load preset file:', err)
+    }
+  }, [handleLoad])
+
+  const handleLoadDemo = useCallback(async () => {
+    const raw = await loadDemoData()
     handleLoad(raw)
-  } catch (err) {
-    console.error('Unable to load preset file:', err)
-  }
-}, [handleLoad])
-
-
-
-const handleLoadDemo = useCallback(async () => {
-  const raw = await loadDemoData()
-  handleLoad(raw)
-}, [handleLoad])
+  }, [handleLoad])
 
   // Update a trajectory property
   const handleTrajectoryUpdate = useCallback((id, patch) => {
@@ -119,6 +115,7 @@ const handleLoadDemo = useCallback(async () => {
     const canvas = canvasRef.current?.getCanvas()
     if (canvas) exportPNG(canvas)
   }
+
   const handleExportSVG = () => {
     if (perturbedScene) exportSVG(perturbedScene, params, 1920, 1080)
   }
@@ -129,7 +126,10 @@ const handleLoadDemo = useCallback(async () => {
       <header style={styles.header}>
         <div style={styles.headerLeft}>
           {rawData && (
-            <button style={styles.headerBtn} onClick={() => { setRawData(null); setTrajectories([]) }}>
+            <button style={styles.headerBtn} onClick={() => { 
+              setRawData(null); 
+              setTrajectories([]) 
+            }}>
               ← new
             </button>
           )}
@@ -138,7 +138,9 @@ const handleLoadDemo = useCallback(async () => {
           {rawData && (
             <span style={styles.headerFile}>
               {rawData.videoPath ? rawData.videoPath.split('/').pop() : 'trajectory data'}
-              <span style={styles.headerMeta}> — {trajectories.length} tracks · {totalFrames} frames</span>
+              <span style={styles.headerMeta}> 
+                — {trajectories.length} tracks · {totalFrames} frames
+              </span>
             </span>
           )}
         </div>
@@ -187,27 +189,23 @@ const handleLoadDemo = useCallback(async () => {
             <DropZone onLoad={handleLoad} />
           )}
 
-
-          {/* Demo button (when no data) */}
-
-
+          {/* Demo files list (bottom center) */}
           {!rawData && (
-  <div style={styles.demoList}>
-            <div style={styles.main}>Fichiers Traités :</div>
-
-    {DEMO_FILES.map(file => (
-      <button
-        key={file.path}
-        style={styles.demoBtn}
-        onClick={() => handleLoadPreset(file.path)}
-      >
-        {file.label}
-      </button>
-    ))}
-  </div>
-)}
-
-
+            <div style={styles.demoContainer}>
+              <div style={styles.demoTitle}>Fichiers :</div>
+              <div style={styles.demoList}>
+                {DEMO_FILES.map(file => (
+                  <button
+                    key={file.path}
+                    style={styles.demoBtn}
+                    onClick={() => handleLoadPreset(file.path)}
+                  >
+                    {file.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -322,34 +320,54 @@ const styles = {
     color: '#dbe2ea',
   },
 
-  demoBtn: {
+  // Demo files styles
+  demoContainer: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 20,
     left: '50%',
     transform: 'translateX(-50%)',
-    padding: '9px 24px',
-    background: 'rgba(26,31,42,0.9)',
-    color: '#c4ccda',
-    border: '1px solid #353d50',
-    borderRadius: 3,
-    fontSize: 11,
-    letterSpacing: '0.14em',
-    textTransform: 'uppercase',
-    cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 12,
+    padding: '16px 20px',
+    background: 'rgba(17,19,26,0.95)',
+    border: '1px solid #2f3442',
+    borderRadius: 8,
+    backdropFilter: 'blur(12px)',
+    maxWidth: '90%',
+  },
+
+  demoTitle: {
+    color: '#e3e8ef',
+    fontSize: 13,
     fontFamily: 'var(--font-mono)',
-    transition: 'color 0.2s, border-color 0.2s, background 0.2s',
+    letterSpacing: '0.05em',
+    fontWeight: 500,
+    marginBottom: 4,
   },
 
   demoList: {
-  position: 'absolute',
-  bottom: 30,
-  left: '50%',
-  transform: 'translateX(-50%)',
-  display: 'flex',
-  gap: 10,
-  flexWrap: 'wrap',
-  justifyContent: 'center',
-  maxWidth: '80%',
-},
+    display: 'flex',
+    gap: 8,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    maxWidth: '100%',
+  },
 
+  demoBtn: {
+    padding: '8px 16px',
+    background: 'rgba(26,31,42,0.8)',
+    color: '#c4ccda',
+    border: '1px solid #353d50',
+    borderRadius: 4,
+    fontSize: 11,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    cursor: 'pointer',
+    fontFamily: 'var(--font-mono)',
+    transition: 'all 0.2s ease',
+    whiteSpace: 'nowrap',
+    minWidth: 140,
+  },
 }

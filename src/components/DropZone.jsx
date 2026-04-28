@@ -47,7 +47,7 @@ export default function DropZone({ onLoad }) {
       <div style={styles.inner}>
         <div style={styles.icon}>⬡</div>
         <div style={styles.main}>Ajouter un fichier</div>
-        <div style={styles.sub}>Selectionner un fichier trajectoire.json</div>
+        <div style={styles.sub}>Selectionner une trajectoire.json</div>
         <div style={styles.format}>Ultralytics YOLO tracking format</div>
         {error && <div style={styles.error}>{error}</div>}
       </div>
