@@ -28,6 +28,7 @@
   --panel-width: 300px;
   --timeline-height: 120px;
   --header-height: 52px;
+  
 }
 
 html, body, #root {
@@ -145,4 +146,17 @@ input[type="checkbox"] {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
+}
+
+
+canvas {
+  display: block;
+  touch-action: manipulation;
+}
+
+@media (max-width: 900px) {
+  :root {
+    --timeline-height: 92px;
+    --header-height: 48px;
+  }
 }

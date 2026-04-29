@@ -13,16 +13,33 @@ const PALETTE = [
 ]
 
 // ─── Main render entry point ─────────────────────────────
-export function renderScene(canvas, sceneData, params, animFrame = null) {
+export function renderScene(canvas, sceneData, params, animFrame = null, view2D = null) {
   if (!canvas || !sceneData) return
-  const ctx = canvas.getContext('2d')
-  const W = canvas.width
-  const H = canvas.height
-  const { trajectories, bounds, polygon } = sceneData
-  const coordMap = makeCoordMapper(bounds, W, H, 60)
 
-  // Background
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return
+
+  const rect = canvas.getBoundingClientRect()
+  const W = Math.max(1, rect.width)
+  const H = Math.max(1, rect.height)
+
+  const { trajectories, bounds, polygon } = sceneData
+  const baseCoordMap = makeCoordMapper(bounds, W, H, 60)
+
+  const zoom = view2D?.zoom ?? 1
+  const panX = view2D?.panX ?? 0
+  const panY = view2D?.panY ?? 0
+
+  const coordMap = (pt) => {
+    const mapped = baseCoordMap(pt)
+    return {
+      x: mapped.x * zoom + panX,
+      y: mapped.y * zoom + panY,
+    }
+  }
+
   ctx.clearRect(0, 0, W, H)
+
   if (params.bgStyle === 'paper') {
     drawPaperTexture(ctx, W, H)
   } else if (params.bgStyle === 'dark') {
@@ -34,7 +51,6 @@ export function renderScene(canvas, sceneData, params, animFrame = null) {
     ctx.fillRect(0, 0, W, H)
   }
 
-  // Clip to polygon if requested
   let clipping = false
   if (params.clipToPolygon && polygon.length > 2) {
     const mapped = polygon.map(coordMap)
@@ -47,24 +63,20 @@ export function renderScene(canvas, sceneData, params, animFrame = null) {
     clipping = true
   }
 
-  // Draw trajectories
   trajectories.forEach((traj, i) => {
     if (!traj.visible) return
 
-    // Active segment or full
     let pts = traj.points
     if (animFrame !== null) {
       pts = pts.slice(0, animFrame + 1)
     }
     if (pts.length < 2) return
 
-    // Transform
     let mappedPts = pts.map(coordMap)
     if (traj.transform) {
       mappedPts = applyTransform(mappedPts, traj.transform)
     }
 
-    // Smooth
     const smoothed = params.smoothing > 0
       ? catmullRomSpline(mappedPts, 0.5, Math.max(4, params.smoothing))
       : mappedPts
@@ -85,11 +97,11 @@ export function renderScene(canvas, sceneData, params, animFrame = null) {
 
   if (clipping) ctx.restore()
 
-  // Polygon overlay
   if (params.showPolygon && polygon.length > 2) {
     drawPolygon(ctx, polygon.map(coordMap), params)
   }
 }
+
 
 // ─── STYLE: INK ──────────────────────────────────────────
 // Variable-width stroke — thick when slow, thin when fast
